@@ -14,7 +14,8 @@ app.use(express.static('public'));
 // Deconstruct 
 const {
     GEOCODE_API_KEY,
-    WEATHER_API_KEY
+    WEATHER_API_KEY,
+    TRAIL_API_KEY
 } = process.env;
 
 // get lat/long function. takes in a city and returns the lat long of city
@@ -52,7 +53,6 @@ app.get('/location', async (req, res) => {
 })
 
 async function getWeather(lat, lon){
-    //pretend to make api call to get the weather for the lat lon
     const response = await request.get(`https://api.weatherbit.io/v2.0/forecast/daily?&lat=${lat}&lon=${lon}&key=${WEATHER_API_KEY}`)
 
     let data = response.body.data;
@@ -61,7 +61,6 @@ async function getWeather(lat, lon){
     const forecastArr = data.map((weatherItem) => {
         return {
             forecast: weatherItem.weather.description,
-            // convert to seconds
             time: new Date(weatherItem.ts * 1000),
         }
     })
@@ -69,7 +68,6 @@ async function getWeather(lat, lon){
 }
 
 //weather endpoint
-// goes into data and gets an array of obj with properties of forecast and time objs.
 app.get('/weather', async (req, res) => {
     try {
         const userLat = req.query.latitude
@@ -81,6 +79,43 @@ app.get('/weather', async (req, res) => {
         res.json(mungedData)
     } catch(e) {
         //error message 
+        res.status(500).json({ error: e.message})
+    }
+})
+
+async function getTrails(lat, lon){
+    const response = await request.get(`https://www.hikingproject.com/data/get-trails?lat=${lat}&lon=${lon}&maxDistance=200&key=${TRAIL_API_KEY}`)
+
+    let data = response.body.trails;
+    
+    data = data.slice(0, 10)
+    const hikeArr = data.map((oneHike) => {
+        return {
+            name: oneHike.name,
+            location: oneHike.location,
+            distance: oneHike.distance,
+            length: oneHike.length,
+            stars: oneHike.stars,
+            star_votes: oneHike.starVotes,
+            summary: oneHike.summary,
+            trail_url: oneHike.trail_url,
+            conditions: oneHike.conditionStatus,
+            condition_date: oneHike.conditionDate.split(' ')[0],
+            condition_time: oneHike.conditionDate.split(' ')[1],
+        }
+    })
+    return hikeArr;
+}
+
+//trails endpoint
+app.get('/trails', async (req, res) => {
+    try {
+        const userLat = req.query.latitude
+        const userLon = req.query.longitude
+
+        const mungedData = await getTrails(userLat, userLon);
+        res.json(mungedData)
+    } catch(e) {
         res.status(500).json({ error: e.message})
     }
 })
