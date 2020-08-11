@@ -15,7 +15,8 @@ app.use(express.static('public'));
 const {
     GEOCODE_API_KEY,
     WEATHER_API_KEY,
-    TRAIL_API_KEY
+    TRAIL_API_KEY,
+    YELP_API_KEY
 } = process.env;
 
 // get lat/long function. takes in a city and returns the lat long of city
@@ -114,6 +115,39 @@ app.get('/trails', async (req, res) => {
         const userLon = req.query.longitude
 
         const mungedData = await getTrails(userLat, userLon);
+        res.json(mungedData)
+    } catch(e) {
+        res.status(500).json({ error: e.message})
+    }
+})
+
+async function getYelpReviews(lat, lon){
+    const response = await request
+        .set('Authorization', `Bearer ${YELP_API_KEY}`)
+        .get(`https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${lon}`)
+
+    let data = response.body.businesses;
+    
+    data = data.slice(0, 20)
+    const reviewArr = data.map((perReview) => {
+        return {
+            name: perReview.name,
+            image_url: perReview.image_url,
+            price: perReview.price,
+            rating: perReview.rating,
+            url: perReview.url
+        }
+    })
+    return reviewArr;
+}
+
+//trails endpoint
+app.get('/yelp', async (req, res) => {
+    try {
+        const userLat = req.query.latitude
+        const userLon = req.query.longitude
+
+        const mungedData = await getYelpReviews(userLat, userLon);
         res.json(mungedData)
     } catch(e) {
         res.status(500).json({ error: e.message})
