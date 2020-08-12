@@ -127,10 +127,6 @@ async function getYelpReviews(lat, lon){
     .set('Authorization', `Bearer ${YELP_API_KEY}`)
 
     let data = response.body.businesses;
-
-    console.log('=============================\n')
-    console.log('|| data', data)
-    console.log('\n=============================')
     
     data = data.slice(0, 20)
     const reviewArr = data.map((perReview) => {
