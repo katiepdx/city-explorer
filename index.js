@@ -123,10 +123,14 @@ app.get('/trails', async (req, res) => {
 
 async function getYelpReviews(lat, lon){
     const response = await request
-        .set('Authorization', `Bearer ${YELP_API_KEY}`)
-        .get(`https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${lon}`)
+    .get(`https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${lon}`)
+    .set('Authorization', `Bearer ${YELP_API_KEY}`)
 
     let data = response.body.businesses;
+
+    console.log('=============================\n')
+    console.log('|| data', data)
+    console.log('\n=============================')
     
     data = data.slice(0, 20)
     const reviewArr = data.map((perReview) => {
@@ -138,11 +142,12 @@ async function getYelpReviews(lat, lon){
             url: perReview.url
         }
     })
+
     return reviewArr;
 }
 
 //trails endpoint
-app.get('/yelp', async (req, res) => {
+app.get('/reviews', async (req, res) => {
     try {
         const userLat = req.query.latitude
         const userLon = req.query.longitude
